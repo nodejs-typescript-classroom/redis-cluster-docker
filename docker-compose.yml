@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  redis-master:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: redis-master
+    ports:
+      - 6379:6379
+      - 17000:17000
+    restart: always
+    entrypoint: [ 'redis-server','/etc/redis/rediscluster.conf', '--port', '6379', '--cluster-enabled', 'yes']
+    healthcheck:
+      test: [ 'CMD', 'redis-cli', '-p', '6379','cluster', 'info' ]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+  redis-slave1:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: redis-slave1
+    ports:
+      - 6378:6378
+      - 17001:17001
+    restart: always
+    entrypoint: [ 'redis-server','/etc/redis/rediscluster.conf', '--port', '6378', '--cluster-enabled','yes']
+    healthcheck:
+      test: [ 'CMD', 'redis-cli', '-p', '6378','cluster', 'info' ]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      - redis-master
+  redis-slave2:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: redis-slave2
+    ports:
+      - 6377:6377
+      - 17002:17002
+    restart: always
+    entrypoint: [ 'redis-server', '/etc/redis/rediscluster.conf', '--port', '6377', '--cluster-enabled', 'yes']
+    healthcheck:
+      test: [ 'CMD', 'redis-cli', '-p', '6377','cluster', 'info' ]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+  redis-slave3:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: redis-slave3
+    ports:
+      - 6376:6376
+      - 17003:17003
+    restart: always
+    entrypoint: [ 'redis-server','/etc/redis/rediscluster.conf', '--port', '6376', '--cluster-enabled', 'yes']
+    healthcheck:
+      test: [ 'CMD', 'redis-cli', '-p', '6376','cluster', 'info' ]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+  redis-slave4:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: redis-slave4
+    ports:
+      - 6375:6375
+      - 17004:17004
+    restart: always
+    entrypoint: [ 'redis-server','/etc/redis/rediscluster.conf', '--port', '6375', '--cluster-enabled', 'yes']
+    healthcheck:
+      test: [ 'CMD', 'redis-cli', '-p', '6375','cluster', 'info' ]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+  redis-slave5:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: redis-slave5
+    ports:
+      - 6374:6374
+      - 17005:17005
+    restart: always
+    entrypoint: [ 'redis-server', '/etc/redis/rediscluster.conf', '--port', '6374',  '--cluster-enabled', 'yes']
+    healthcheck:
+      test: [ 'CMD', 'redis-cli', '-p', '6374','cluster', 'info' ]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+  redis-cluster-creator:
+    image: redis
+    entrypoint: ['/bin/sh','-c','echo "yes" | redis-cli -a pass.123 --cluster create redis-master:6379 redis-slave1:6378 redis-slave2:6377 redis-slave3:6376 redis-slave4:6375 redis-slave5:6374 --cluster-replicas 1']
+    depends_on:
+      redis-slave5:
+        condition: service_healthy
+      redis-slave4:
+        condition: service_healthy
+      redis-slave3:
+        condition: service_healthy
+      redis-slave2:
+        condition: service_healthy
+      redis-slave1:
+        condition: service_healthy
+      redis-master:
+        condition: service_healthy
